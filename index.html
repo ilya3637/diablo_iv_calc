@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Калькулятор урона — Diablo IV</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div id="float-tip" class="float-tip" hidden></div>
+
+<header class="top">
+  <div class="mode-tabs" role="tablist">
+    <button type="button" class="mode on" data-mode="damage" role="tab" aria-selected="true">Калькулятор урона</button>
+    <button type="button" class="mode" data-mode="defense" role="tab" aria-selected="false">Калькулятор защиты</button>
+    <button type="button" class="mode" data-mode="formula" role="tab" aria-selected="false">Формула</button>
+  </div>
+  <p id="status" class="status" role="status"></p>
+  <div class="top-actions">
+    <button type="button" id="btn-example" class="ghost">Пример с листа</button>
+    <button type="button" id="btn-reset" class="ghost">Сбросить</button>
+    <button type="button" id="btn-save" class="solid">Сохранить расчёт</button>
+    <label class="file-btn">
+      Открыть файл
+      <input id="file-load" type="file" accept=".txt,text/plain">
+    </label>
+  </div>
+</header>
+
+<div id="mode-damage" class="layout">
+  <main>
+    <section class="panel">
+      <details open>
+      <summary>Персонаж</summary>
+      <div class="grid2">
+      <div class="line season-line">
+        <label data-tip="season">Сезон</label>
+        <span id="season-dates" class="season-dates" data-tip="season"></span>
+        <div class="pick">
+          <button type="button" class="pick-btn" id="season-btn" aria-haspopup="listbox" aria-expanded="false" aria-controls="season-pop" aria-label="Сезон"></button>
+          <div id="season-pop" class="pick-pop" role="listbox" hidden></div>
+          <select id="season" class="pick-native" tabindex="-1" aria-hidden="true"></select>
+        </div>
+      </div>
+      <div class="line">
+        <label data-tip="level">Уровень сложности</label>
+        <div class="level-wrap">
+          <button type="button" id="level-btn" class="level-btn" aria-haspopup="listbox" aria-expanded="false">1</button>
+          <div id="level-pop" class="level-pop" hidden></div>
+          <input id="level" type="hidden" value="1">
+        </div>
+      </div>
+      </div>
+      <p id="season-warn" class="warn" hidden>Для этого сезона коэффициенты ещё не внесены. Расчёт включится, когда появится таблица патча.</p>
+      </details>
+    </section>
+
+    <section class="panel">
+      <details open>
+      <summary>Оружие и умение</summary>
+      <div class="grid2">
+      <div class="line">
+        <label data-tip="weapon">Базовый урон от оружия</label>
+        <input id="weapon" type="number" min="0" step="1" value="0" inputmode="numeric">
+      </div>
+      <div class="line">
+        <label data-tip="thorns">Шипы</label>
+        <input id="thorns" type="number" min="0" step="1" value="0" inputmode="numeric">
+      </div>
+      <div class="line">
+        <label data-tip="weapon-speed">Скорость оружия</label>
+        <input id="weapon-speed" type="number" min="0" step="0.01" value="1" inputmode="decimal">
+      </div>
+      <div class="line">
+        <label data-tip="attack-speed">Бонус к скорости атаки, %</label>
+        <input id="attack-speed" type="number" step="0.1" value="0" inputmode="decimal">
+      </div>
+      <div class="line">
+        <label data-tip="aps">Ударов в секунду</label>
+        <input id="aps" type="number" min="0" step="0.01" value="1" placeholder="из скорости оружия" inputmode="decimal">
+      </div>
+      <div class="line">
+        <label data-tip="skill">Прямой урон умения, %</label>
+        <input id="skill" type="number" min="0" step="0.1" value="100" inputmode="decimal">
+      </div>
+      <div class="line">
+        <label data-tip="dot">Периодический урон умения, % в секунду</label>
+        <input id="dot" type="number" min="0" step="0.1" value="0" inputmode="decimal">
+      </div>
+      </div>
+      </details>
+    </section>
+
+    <section class="panel">
+      <details open>
+      <summary>Основная характеристика</summary>
+      <div class="grid2 stat-grid">
+      <div class="line">
+        <label data-tip="class">Класс</label>
+        <div class="pick">
+          <button type="button" class="pick-btn" id="class-btn" aria-haspopup="listbox" aria-expanded="false" aria-controls="class-pop" aria-label="Класс"></button>
+          <div id="class-pop" class="pick-pop" role="listbox" hidden></div>
+          <select id="class" class="pick-native" tabindex="-1" aria-hidden="true"></select>
+        </div>
+      </div>
+      <div>
+      <div class="line">
+        <label data-tip="stat" id="stat-label">Интеллект</label>
+        <input id="stat" type="number" min="0" step="1" value="0" inputmode="numeric">
+      </div>
+      <div class="line">
+        <label data-tip="stat-bonus" id="stat-bonus-label">Бонус от характеристики (Интеллект)</label>
+        <span class="bonus-field">
+          <input id="stat-bonus" type="number" step="0.1" value="0" inputmode="decimal" readonly>
+          <button type="button" id="btn-stat-mode" class="icon-btn" aria-pressed="false" data-tip="stat-mode" title="Ввести число с тултипа">
+            <svg viewBox="0 0 16 16" width="13" height="13" aria-hidden="true"><path fill="currentColor" d="M2 12.4V14h1.6l8-8-1.6-1.6-8 8zm10.9-7a.5.5 0 0 0 0-.7l-.6-.6a.5.5 0 0 0-.7 0l-.5.5 1.3 1.3.5-.5z"/></svg>
+          </button>
+        </span>
+      </div>
+      </div>
+      </div>
+      <p class="hint"><span id="stat-hint"></span></p>
+      </details>
+    </section>
+
+    <section class="panel">
+      <details open>
+      <summary>Лист атаки, прибавки [+]</summary>
+      <div class="grid2">
+      <div class="line">
+        <label data-tip="demon-x">Урон демонам, × %</label>
+        <input id="demon-x" type="number" step="0.1" value="0" inputmode="decimal">
+      </div>
+      <div class="line">
+        <label data-tip="undead-x">Урон нежити, × %</label>
+        <input id="undead-x" type="number" step="0.1" value="0" inputmode="decimal">
+      </div>
+      </div>
+      <div id="sheet-rows" class="grid2"></div>
+      </details>
+    </section>
+
+    <section class="panel">
+      <details open>
+      <summary>Множители [×]</summary>
+      <div class="grid2">
+      <div class="line">
+        <label data-tip="vuln-x">Множитель урона по уязвимым, %</label>
+        <input id="vuln-x" type="number" step="0.1" value="0" inputmode="decimal">
+      </div>
+      <div class="line">
+        <label data-tip="crit-x">Множитель критического урона, %</label>
+        <input id="crit-x" type="number" step="0.1" value="0" inputmode="decimal">
+      </div>
+      <div class="line">
+        <label data-tip="dot-x">Множитель периодического урона, %</label>
+        <input id="dot-x" type="number" step="0.1" value="0" inputmode="decimal">
+      </div>
+      </div>
+      </details>
+    </section>
+  </main>
+
+  <aside class="panel results-pane">
+    <div class="target">
+      <p class="target-title" data-tip="target">Состояния цели</p>
+      <div class="checks">
+        <label class="check"><input type="checkbox" id="vuln-on" checked> <span data-tip="vuln-on">Уязвим</span></label>
+        <label class="check"><input type="checkbox" id="elite-on"> <span data-tip="elite-on">Элитный / босс</span></label>
+        <label class="check"><input type="checkbox" id="guaranteed"> <span data-tip="guaranteed">Гарантированные криты</span></label>
+        <label class="check"><input type="checkbox" id="unstoppable-on"> <span data-tip="unstoppable">Неудержимый</span></label>
+      </div>
+    </div>
+    <div class="target">
+      <p class="target-title" data-tip="element">Стихия удара</p>
+      <div class="type-row" id="type-row" role="radiogroup" aria-label="Стихия удара"></div>
+    </div>
+    <div id="tab-values" class="tab-panel">
+      <div id="results"></div>
+      <details class="formula-block">
+        <summary>Формула</summary>
+        <ol id="formula" class="formula"></ol>
+      </details>
+    </div>
+  </aside>
+</div>
+
+<div id="mode-defense" class="layout" hidden>
+  <main>
+    <section class="panel">
+      <details open>
+      <summary>Здоровье</summary>
+      <div class="grid2">
+      <div class="line">
+        <label data-tip="life">Максимальное здоровье</label>
+        <input id="def-life" type="number" min="0" step="1" value="0" inputmode="numeric">
+      </div>
+      <div class="line">
+        <label data-tip="barrier">Барьер</label>
+        <input id="def-barrier" type="number" min="0" step="1" value="0" inputmode="numeric">
+      </div>
+      <div class="line">
+        <label data-tip="regen">Регенерация в секунду</label>
+        <input id="def-regen" type="number" min="0" step="1" value="0" inputmode="decimal">
+      </div>
+      <div class="line">
+        <label data-tip="dodge">Уклонение, %</label>
+        <input id="def-dodge" type="number" min="0" max="100" step="0.1" value="0" inputmode="decimal">
+      </div>
+      </div>
+      </details>
+    </section>
+
+    <section class="panel">
+      <details open>
+      <summary>Броня и сопротивления</summary>
+      <div class="grid2">
+      <div class="line">
+        <label data-tip="armor">Броня</label>
+        <input id="def-armor" type="number" min="0" step="1" value="0" inputmode="numeric">
+      </div>
+      <div class="line">
+        <label data-tip="resist-cap">Потолок сопротивления, %</label>
+        <input id="def-cap" type="number" min="0" max="100" step="1" value="70" inputmode="numeric">
+      </div>
+      <div class="line">
+        <label data-tip="resist">Сопротивление огню, %</label>
+        <input id="def-fire" type="number" step="0.1" value="0" inputmode="decimal">
+      </div>
+      <div class="line">
+        <label data-tip="resist">Сопротивление молнии, %</label>
+        <input id="def-lightning" type="number" step="0.1" value="0" inputmode="decimal">
+      </div>
+      <div class="line">
+        <label data-tip="resist">Сопротивление холоду, %</label>
+        <input id="def-cold" type="number" step="0.1" value="0" inputmode="decimal">
+      </div>
+      <div class="line">
+        <label data-tip="resist">Сопротивление яду, %</label>
+        <input id="def-poison" type="number" step="0.1" value="0" inputmode="decimal">
+      </div>
+      <div class="line">
+        <label data-tip="resist">Сопротивление темной магии, %</label>
+        <input id="def-shadow" type="number" step="0.1" value="0" inputmode="decimal">
+      </div>
+      </div>
+      <p class="hint">Числа с листа в открытом мире: штраф истязания уже внутри. У сил Света отдельного сопротивления нет.</p>
+      </details>
+    </section>
+
+    <section class="panel">
+      <details open>
+      <summary>Снижение урона, каждое само по себе</summary>
+      <div class="grid2">
+      <div class="line">
+        <label data-tip="dr">Снижение урона, %</label>
+        <input id="def-dr" type="number" min="0" step="0.1" value="0" inputmode="decimal">
+      </div>
+      <div class="line">
+        <label data-tip="dr-close">Снижение урона вблизи, %</label>
+        <input id="def-close" type="number" min="0" step="0.1" value="0" inputmode="decimal">
+      </div>
+      <div class="line">
+        <label data-tip="dr-far">Снижение урона издалека, %</label>
+        <input id="def-far" type="number" min="0" step="0.1" value="0" inputmode="decimal">
+      </div>
+      <div class="line">
+        <label data-tip="dr-elite">Снижение урона от элитных, %</label>
+        <input id="def-elite" type="number" min="0" step="0.1" value="0" inputmode="decimal">
+      </div>
+      <div class="line">
+        <label data-tip="dr-fort">Снижение урона в укреплении, %</label>
+        <input id="def-fort" type="number" min="0" step="0.1" value="0" inputmode="decimal">
+      </div>
+      <div class="line">
+        <label data-tip="dr-unstop">Снижение урона при неудержимости, %</label>
+        <input id="def-unstop" type="number" min="0" step="0.1" value="0" inputmode="decimal">
+      </div>
+      </div>
+      <p class="hint" data-tip="fortify">Пока герой укреплён, игра сама режет урон на 15%. Это поле сверху — только дополнительная строка с вещей.</p>
+      </details>
+    </section>
+  </main>
+
+  <aside class="panel results-pane">
+    <div class="target">
+      <p class="target-title" data-tip="hero">Состояния героя</p>
+      <div class="checks">
+        <label class="check"><input type="checkbox" id="hero-fort"> <span data-tip="fortify">Укреплён</span></label>
+        <label class="check"><input type="checkbox" id="hero-vuln"> <span data-tip="hero-vuln">Уязвим</span></label>
+        <label class="check"><input type="checkbox" id="hero-unstop"> <span data-tip="hero-unstop">Неудержимость</span></label>
+        <label class="check"><input type="checkbox" id="hero-close" checked> <span data-tip="dr-close">Удар вблизи</span></label>
+        <label class="check"><input type="checkbox" id="hero-far"> <span data-tip="dr-far">Удар издалека</span></label>
+        <label class="check"><input type="checkbox" id="hero-elite"> <span data-tip="dr-elite">Источник — элита</span></label>
+      </div>
+    </div>
+    <div id="defense-results" class="tab-panel"></div>
+  </aside>
+</div>
+
+<div id="mode-formula" class="formula-page" hidden>
+  <p class="eq-note">Каждый раздел — множитель следующего. Итог — их произведение. Скорость атаки сюда не входит: это один удар, не урон в секунду.</p>
+
+  <section class="lab-sec">
+    <h3 data-tip="lab-base">База</h3>
+    <p class="fine">Изначальный урон до скобок. Каждое оружие или другой плоский урон — своя строка, строки складываются.</p>
+    <div id="lab-bases" class="lab-list"></div>
+    <button type="button" class="lab-add" data-lab-add="base">+ урон</button>
+    <p class="lab-out">Сумма <b id="lab-base-sum">100</b></p>
+  </section>
+
+  <section class="lab-sec">
+    <h3 data-tip="lab-stat">Характеристика</h3>
+    <p class="fine">Бонус с тултипа «Увеличивает урон от умений на …%». Это не само число силы, интеллекта, ловкости или воли.</p>
+    <div class="lab-row">
+      <span class="lab-op">(1 +</span>
+      <input id="lab-stat" type="number" step="0.1" value="0" inputmode="decimal" aria-label="Бонус характеристики" data-tip="lab-stat">
+      <span class="lab-op">%)</span>
+      <b id="lab-stat-factor">×1,00</b>
+    </div>
+  </section>
+
+  <section class="lab-sec">
+    <h3 data-tip="lab-skill">Урон умения</h3>
+    <p class="fine">Процент на умении в дереве навыков или в другом месте, которое названо на тултипе. 100% значит, что удар начинается с базы. Несколько таких процентов складываются.</p>
+    <div id="lab-skills" class="lab-list"></div>
+    <button type="button" class="lab-add" data-lab-add="skill">+ процент</button>
+    <p class="lab-out">Коэффициент <b id="lab-skill-factor">×1,00</b></p>
+  </section>
+
+  <section class="lab-sec">
+    <h3 data-tip="lab-add">Прибавки [+]</h3>
+    <p class="fine">Все плюсы складываются в одну скобку. 30% и 20% дают ×1,50, а не два умножения. Сюда идут весь урон, урон от холода, урон уязвимым и другие [+]. Множитель с крестом сюда не кладут.</p>
+    <div id="lab-adds" class="lab-list"></div>
+    <button type="button" class="lab-add" data-lab-add="add">+ прибавка</button>
+    <p class="lab-out">Скобка <b id="lab-add-factor">×1,00</b></p>
+  </section>
+
+  <section class="lab-sec">
+    <h3 data-tip="lab-mul">Множители [×]</h3>
+    <p class="fine">Каждая строка — своя скобка, скобки перемножаются. Например множитель урона от холода или множитель всего урона. Дважды по 50% дают ×2,25.</p>
+    <div id="lab-muls" class="lab-list"></div>
+    <button type="button" class="lab-add" data-lab-add="mul">+ множитель</button>
+    <p class="lab-out">Произведение <b id="lab-mul-factor">×1</b></p>
+  </section>
+
+  <section class="lab-sec">
+    <h3>Уязвимость и крит</h3>
+    <div class="checks">
+      <label class="check" data-tip="lab-vuln"><input type="checkbox" id="lab-vuln"> <span>Цель уязвима, ×1,20</span></label>
+      <label class="check" data-tip="lab-crit"><input type="checkbox" id="lab-crit"> <span>Удар критический, ×1,50</span></label>
+    </div>
+    <div class="lab-row">
+      <span class="lab-op" data-tip="lab-crit-pct">Критический урон</span>
+      <input id="lab-crit-pct" type="number" step="0.1" value="50" inputmode="decimal" aria-label="Критический урон, %" data-tip="lab-crit-pct">
+      <span class="lab-op">%</span>
+    </div>
+    <p class="fine" id="lab-crit-note"></p>
+    <p class="lab-out">Уязвимость <b id="lab-vuln-factor">×1</b> <span class="lab-op">×</span> крит <b id="lab-crit-factor">×1</b></p>
+  </section>
+
+  <p class="lab-total">Итог <b id="lab-result">100</b></p>
+  <p id="lab-work" class="eq-work"></p>
+</div>
+
+<script src="calc.js"></script>
+</body>
+</html>
